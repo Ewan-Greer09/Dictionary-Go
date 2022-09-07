@@ -12,6 +12,24 @@ import (
 
 //language: go
 
+// create nested struct to store the response
+type response struct {
+	Word      string `json:"word"`
+	Phonetics []struct {
+		Text  string
+		Audio string
+	}
+	Meanings []struct {
+		PartOfSpeech string
+		Definitions  []struct {
+			Definition string
+			Example    string
+			Synonyms   []string
+			Antonyms   []string
+		}
+	}
+}
+
 var URL string = "https://api.dictionaryapi.dev/api/v2/entries/en_US/"
 
 func main() {
@@ -68,36 +86,29 @@ func findDefinition() {
 	//https://api.dictionaryapi.dev/api/v2/entries/en_US/{word}
 
 	//make a request to the dictionary api
-	res, err := http.Get(URL + word)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer res.Body.Close()
-
-	fmt.Println("Response status: ", res.Status)
-
-	body, err := ioutil.ReadAll(res.Body)
+	req, err := http.NewRequest("GET", URL+word, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	//create nested struct to store the response
-	type response struct {
-		Word      string `json:"word"`
-		Phonetics []struct {
-			Text  string
-			Audio string
-		}
-		Meanings []struct {
-			PartOfSpeech string
-			Definitions  []struct {
-				Definition string
-				Example    string
-				Synonyms   []string
-				Antonyms   []string
-			}
-		}
+	req.Header.Set("Accept", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	defer resp.Body.Close()
+
+	//fmt.Println("Response status: ", res.Response.Status)
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	body = body[1:]
+	body = body[:len(body)-1]
 
 	//!-main Figure out how to fucking parse this shit right
 	//! currently its just printing empty brackets
@@ -106,6 +117,7 @@ func findDefinition() {
 	var responseObject response
 	json.Unmarshal(body, &responseObject)
 	fmt.Println(string(responseObject.Word))
+	fmt.Println(responseObject.Meanings[0].Definitions[0].Definition)
 
 }
 
