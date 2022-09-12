@@ -43,9 +43,7 @@ func main() {
 // menu used to select what a user wants to do
 func menu() {
 	fmt.Println("1. Find a definition")
-	fmt.Println("2. Get an example")
-	fmt.Println("3. Get a synonym")
-	fmt.Println("4. Exit")
+	fmt.Println("2. Exit")
 
 	var choice int
 
@@ -54,12 +52,8 @@ func menu() {
 
 	switch choice {
 	case 1:
-		findDefinition()
+		returnWordDetails()
 	case 2:
-		getExample()
-	case 3:
-		getSynonym()
-	case 4:
 		exit()
 	default:
 		fmt.Println("Invalid choice")
@@ -70,7 +64,8 @@ func menu() {
 	menu()
 }
 
-func findDefinition() {
+// retrieve the definition of a word from the API
+func returnWordDetails() {
 	//requesting a word from the user
 	fmt.Println("Finding a definition")
 
@@ -110,19 +105,28 @@ func findDefinition() {
 	body = body[1:]
 	body = body[:len(body)-1]
 
-	//!-main Figure out how to fucking parse this shit right
-	//! currently its just printing empty brackets
-	/*//*in theory this should be parsing the response
-	//* into a struct which can then be printed */
-	var responseObject response
-	json.Unmarshal(body, &responseObject)
-	fmt.Println(string(responseObject.Word))
-	fmt.Println(responseObject.Meanings[0].Definitions[0].Definition)
+	//parese json response into response struct of definintions
+	var definitions response
+	err = json.Unmarshal(body, &definitions)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-}
+	//print the definitions
+	fmt.Println("Definitions for: ", word)
+	for _, meaning := range definitions.Meanings {
+		fmt.Println("-------------------------------------")
+		fmt.Println("Part of Speech: ", meaning.PartOfSpeech)
+		for _, definition := range meaning.Definitions {
+			fmt.Println("Definition: ", definition.Definition)
+			fmt.Println("Example: ", definition.Example)
+			fmt.Println("Synonyms: ", definition.Synonyms)
+			fmt.Println("Antonyms: ", definition.Antonyms)
+			fmt.Println("-------------------------------------")
 
-func getExample() {
-	fmt.Println("Getting an example")
+		}
+	}
+
 }
 
 func getSynonym() {
